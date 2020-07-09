@@ -1,59 +1,6 @@
-#------------- House Keeping ---------------------------------------------------
-# Clean the Global Environment
-rm(list = ls())
 
-# Clean graphs, if present
-clg <- function(){
-  if(is.null(dev.list()) == FALSE) dev.off()
-}
-clg() 
 
-# Clean the R console
-clc <- function(){
-  cat ("\014")
-}
-clc()
-
-# options("rstudio.errors.suppressed" = FALSE)
-
-#------------- End of House Keeping --------------------------------------------
-
-#---- Loading Liraries ----
-#installr()
-#source("DBDA2E-utilities.R")
-library(rjags)
-library(corpcor)
-library(plyr)
-library(dplyr)
-library(tidyverse)
-library(ggplot2)
-library(ggpubr)
-library(ggrepel)    # for adding ID to ggplot
-library(stats)
-library(psych)
-library(ez)
-library(Matrix)
-library(apaTables)
-library(lme4)
-library(lmerTest)
-library(car)
-library(matrixStats)
-library(QuantPsyc)
-library(nnet)
-library(glmnet)
-library(doParallel)
-library(gmodels)      # for chi squer
-library(vcd)          # for chi squer
-library(Hmisc)    # for cumputing errorbars at the ggplot
-library(BaylorEdPsych)     # log reg
-library(ResourceSelection) # log reg
-library(sjstats)  # for etasquer
-library(effsize)  # for cohen's d
-#cl <- makeCluster(4)
-#registerDoParallel(cl)
-#---- End of Loading Libraries ----
-
-setwd('D:\\Tom\\ROB23\\data')
+setwd('D:\\Tom\\ROB23\\ET-Exp\\Data\\Behavioral data')
 
 subjectNumber <- 51
 subjectName   <- c()
@@ -105,8 +52,8 @@ dataBehavioral$QIDUnite <- ifelse(dataBehavioral$QID == 13, 1314,
                                                                                                                              ifelse(dataBehavioral$QID == 27, 2728,
                                                                                                                                     ifelse(dataBehavioral$QID == 28, 2728, dataBehavioral$QID))))))))))))))))
 
-dataBehavioral$questionGroup <- ifelse(dataBehavioral$QIDUnite >= 1314 & dataBehavioral$QIDUnite <= 1920, "newQ",
-                                       ifelse(dataBehavioral$QIDUnite >= 2122 & dataBehavioral$QIDUnite <= 2728, "oldQ", "otherQ"))
+dataBehavioral$qType <- ifelse(dataBehavioral$QIDUnite >= 1314 & dataBehavioral$QIDUnite <= 1920, "New",
+                                       ifelse(dataBehavioral$QIDUnite >= 2122 & dataBehavioral$QIDUnite <= 2728, "Old", "Other"))
 dataBehavioral$QIDUnite <- as.factor(dataBehavioral$QIDUnite)
 
 ##### End chaging data  ####
@@ -119,8 +66,9 @@ NBlocks <- length(unique(dataBehavioral$newBlock))
 ########################
 #  cleaning RT         #
 ########################
+endQuestionTime <- 2350
 dataBehavioral$cleanRT <- ifelse(dataBehavioral$newBlock <= 2 , 
-                                 ifelse(dataBehavioral$RT < 2350 | dataBehavioral$RT > 10000, NA, dataBehavioral$RT), dataBehavioral$RT)
+                                 ifelse(dataBehavioral$RT < endQuestionTime | dataBehavioral$RT > 10000, NA, dataBehavioral$RT), dataBehavioral$RT)
 # same vector - "cleanRT" - w/o 3SD. 
 theVector <- c()
 for (Pp in unique(dataBehavioral$ID)){
@@ -154,13 +102,15 @@ d5 <- NULL
 # new vector - "newIsCorrect - is correct w/o bad RT tirals. For OT and catch to use regular IsCorrect
 dataBehavioral$newIsCorrect <- ifelse(is.na(dataBehavioral$cleanRT), NA, dataBehavioral$IsCorrect)
 dataBehavioral$answerET  <- ifelse(dataBehavioral$Answer == 2, -1, 1)                  ## Yes == 1, No == -1
-dataBehavioral$questionTypeET <- ifelse(dataBehavioral$questionGroup == "newQ", 1, -1) ## newQ == 1, oldQ == -1
+dataBehavioral$questionTypeET <- ifelse(dataBehavioral$qType == "New", 1, -1) ## newQ == 1, oldQ == -1
 dataBehavioral$goodTrials <- ifelse(is.na(dataBehavioral$newIsCorrect), NA, dataBehavioral$BlockTrial)
 dataBehavioral$goodBlocks <- ifelse(is.na(dataBehavioral$newIsCorrect), NA, dataBehavioral$newBlock)
 
 Badpp <- c(40, 32, 9, 13, 33, 38, 8, 45, 35, 34, 1, 2, 3, 4, 23, 10, 49, 50)
 forMerging <- dataBehavioral[! dataBehavioral$ID %in% Badpp, ]
 
+#setwd('D:\\Tom\\ROB23\\ET-Exp\\Clean Data')
+#write.csv(forMerging, 'Clean Behavioral.csv')
 
 dForETtoMerge <- cbind(forMerging$ID, forMerging$goodBlocks, forMerging$SubBlock, forMerging$goodTrials, forMerging$answerET, forMerging$questionTypeET, forMerging$QIDUnite, forMerging$newIsCorrect)
 dForETtoMerge <- as.data.frame(dForETtoMerge)    # the data I want to merge with the ET data

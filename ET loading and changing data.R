@@ -1,72 +1,13 @@
-#------------- House Keeping ---------------------------------------------------
-# Clean the Global Environment
-rm(list = ls())
-
-# Clean graphs, if present
-clg <- function(){
-  if(is.null(dev.list()) == FALSE) dev.off()
-}
-clg() 
-
-# Clean the R console
-clc <- function(){
-  cat ("\014")
-}
-clc()
-
-options("rstudio.errors.suppressed" = FALSE)
-
-#------------- End of House Keeping --------------------------------------------
-
-#---- Loading Liraries ----
-#installr()
-#source("DBDA2E-utilities.R")
-library(rjags)
-library(corpcor)
-library(plyr)
-library(dplyr)
-library(tidyverse)
-library(ggplot2)
-library(ggpubr)
-library(ggrepel)    # for adding ID to ggplot
-library(stats)
-library(psych)
-library(ez)
-library(Matrix)
-library(apaTables)
-library(lme4)
-library(lmerTest)
-library(car)
-library(matrixStats)
-library(QuantPsyc)
-library(nnet)
-library(glmnet)
-library(doParallel)
-library(gmodels)      # for chi squer
-library(vcd)          # for chi squer
-library(Hmisc)    # for cumputing errorbars at the ggplot
-library(BaylorEdPsych)     # log reg
-library(ResourceSelection) # log reg
-library(sjstats)  # for etasquer
-library(effsize)  # for cohen's d
-#cl <- makeCluster(4)
-#registerDoParallel(cl)
-library(EventDetectR)    # eye traker event detection?
-library(saccades)        # eye traker event detection?
-library(eyetrackingR)
-#---- End of Loading Libraries ----
 
 setwd('D:\\Tom\\ROB23\\newETData\\CSVs\\full data\\With pupil size')
-
 ### Loading raw Data ###
 
-#subjectNumber <- 52
-#subjectName   <- c()
-#for (i in 5:subjectNumber){
-#  subjectName <- c(subjectName, paste0("EDF", i, ".csv", sep = ''))}
-#dataEyeTraker <- do.call(rbind, lapply(subjectName, function(x)
-#  read.csv(x, stringsAsFactors = FALSE)))
-
+subjectNumber <- 52
+subjectName   <- c()
+for (i in 5:subjectNumber){
+  subjectName <- c(subjectName, paste0("EDF", i, ".csv", sep = ''))}
+dataEyeTraker <- do.call(rbind, lapply(subjectName, function(x)
+  read.csv(x, stringsAsFactors = FALSE)))
 
 
 
@@ -80,6 +21,7 @@ dataEyeTraker <- dataEyeTraker[dataEyeTraker$TrialTime <= 10000, ]
 dataEyeTraker <- dataEyeTraker[dataEyeTraker$Block <= 3, ]
 dataEyeTraker <- dataEyeTraker[dataEyeTraker$ID != 17, ]
 #dataEyeTraker$gx <- NULL
+
 
 ## making block 1:3
 dataEyeTraker$Block <- ifelse(dataEyeTraker$Block == 3, 2, dataEyeTraker$Block)  
@@ -101,7 +43,6 @@ length(unique(dataEyeTraker$ID))
 dataEyeTraker$toMerge <- as.numeric(paste0(dataEyeTraker$ID, dataEyeTraker$Block, dataEyeTraker$Trial))
 dataEyeTraker$toMerge <- ifelse(dataEyeTraker$ID >= 10,  as.numeric(paste0(dataEyeTraker$toMerge, 11)),
                                 dataEyeTraker$toMerge)
-
 #dForETtoMerge <- read.csv('dForETtoMerge.csv')
 dataEyeTraker <- dataEyeTraker[dataEyeTraker$toMerge %in% dForETtoMerge$toMerge, ]
 sort(unique(dataEyeTraker$ID))
@@ -117,6 +58,7 @@ dForETtoMerge <- NULL
 #sort(unique(Data$ID))
 #length(unique(Data$ID))
 
+setwd('D:\\Tom\\ROB23\\ET-Exp\\Data\\Clean united Data')
 Index <- 1
 for (i in unique(Data$ID)){
   Name <- paste0('Index', Index, ".csv")
@@ -129,14 +71,7 @@ for (i in unique(Data$ID)){
 
 ### Loading clean and merged data ###
 
-subjectNumber <- 31
-subjectName   <- c()
-for (i in 1:subjectNumber){
-  subjectName <- c(subjectName, paste0("Index", i, ".csv", sep = ''))}
-Data <- do.call(rbind, lapply(subjectName, function(x)
-  read.csv(x, stringsAsFactors = FALSE)))
-Data$Trial.y <- NULL
-Data$X <- NULL
+
 
 B2 <- subset(Data, Data$Block == 2)
 B2 <- B2[B2$TrialTime >= 2150 & B2$TrialTime <= 2300, ]

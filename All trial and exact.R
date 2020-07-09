@@ -1,6 +1,6 @@
 
 #b2Data <- Data[Data$Block == 2 & Data$ID %in% unique(tt), ]  # exlude failure in conditions seperatly
-b2Data <- Data[Data$Block == 2 & Data$ID %in% c(41, 46), ]  # exlude failure in conditions together
+b2Data <- Data[Data$Block == 2, ]  # exlude failure in conditions together
 unique(Data$ID)
 #b2Data <- subset(b2Data, b2Data$newIsCorrect == 1)
 sort(unique(b2Data$ID))
@@ -14,8 +14,8 @@ length(unique(b2Data$ID))
 b2Data$X <- NULL
 b2Data$toMerge <- NULL
 
-formixmodelData <- b2Data[b2Data$TrialTime >= 2150 & b2Data$TrialTime <= 2250, ]
-mixmodelData <- ddply(formixmodelData, c('ID', 'Trial', 'Answer', 'qType', 'qID'), summarise,
+formixmodelData <- b2Data[b2Data$TrialTime >= 2200 & b2Data$TrialTime <= 2300, ]
+mixmodelData <- ddply(formixmodelData, c('ID', 'Trial.x', 'Answer', 'qType', 'qID'), summarise,
                       Mean = mean(gy, na.rm = TRUE))
 formixmodelData$qID <- as.factor(formixmodelData$qID)
 summary(lmer(Mean ~ Answer * qType + (1 + Answer * qType + qID | ID)  + (1 + 1 | qID), REML = FALSE, data = mixmodelData))   
@@ -56,19 +56,8 @@ ggplot(mixmodelGraph, aes(x = qType, y = MeanData, fill = Answer)) +
   stat_summary(fun.y = mean, geom = "point", shape = 18, size = 5,  aes(color = Answer) , position = position_dodge(0.8)) + 
   stat_summary(fun.data = mean_sdl, fun.args = list(mult = 1), geom = "pointrange", aes(color = Answer), position = position_dodge(0.8)) +
   xlab('Question type') + ylab('Converted mean y axis fixation') + ggtitle('Experimental all questions only participants above 40% accuracy') + 
-  theme(plot.title = element_text(hjust = 0.5)) +
-  theme(axis.text   = element_text(size = 12),
-        axis.title  = element_text(size = 14, face = "bold"),
-        axis.line.y = element_line(color = "black", size = 1),
-        axis.line.x = element_line(color = "black", size = 1)) +
-  theme(axis.line.y = element_line(color = "black", size = 1),
-        axis.line.x = element_line(color = "black", size = 1)) +
-  theme(legend.text = element_text(size = 14)) +
-  geom_label_repel(aes(label = ID),
-                   box.padding   = 0.35, 
-                   point.padding = 0.5,
-                   segment.color = 'grey50', position=position_dodge(0.8))
-ggsave('Experimental all questions without two by two dotplot only participant above 0.4 accuracy.pdf', width = 40, height = 28, units = "cm")
+  Theme +
+  Lbls
 
 exactGraphData <- b2Data[b2Data$TrialTime <= 3000, ]
 
@@ -78,25 +67,19 @@ No              <- -1
 colorNo         <- 'red' 
 
 # graphs for group
-graphTitel <- c("Experimental all questions No only participants above 40% accuracy")
-graphName <- c("Experimental all questions No only participants above 0.4 accuracy.pdf")
-GraphData <- ddply(exactGraphData, c("ID", 'TrialTime', 'Answer'), summarise,
-                   Mean = mean(gy, na.rm = TRUE))
-ggplot(GraphData[GraphData$Answer == No, ], aes(x = TrialTime, y = Mean)) + 
-  geom_point(stat = 'summary', fun.y = 'mean', color = 'black', size = 1) +
+graphTitel <- c("Experimental all questions No")
+
+GraphData <- b2Data %>%
+  group_by(ID, TrialTime, Answer) %>%
+  summarise(Mean = mean(gy, na.rm = TRUE)) %>%
+  filter(Answer == -1) %>%
+  ggplot(aes(x = TrialTime, y = Mean)) + 
+  geom_point(stat = 'summary', fun = 'mean', color = 'black', size = 1) +
   stat_summary(fun.data = mean_sdl, fun.args = list(mult = 1), 
                geom = "errorbar", color = colorNo, width = 0.2, alpha = 0.1) +
   xlab("Time") + ylab("Converted hight") + ggtitle(graphTitel) +
-  ylim(200, 900) +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  theme(axis.text   = element_text(size = 12),
-        axis.title  = element_text(size = 14, face = "bold"),
-        axis.line.y = element_line(color = "black", size = 1),
-        axis.line.x = element_line(color = "black", size = 1)) +
-  theme(axis.line.y = element_line(color = "black", size = 1),
-        axis.line.x = element_line(color = "black", size = 1)) +
-  theme(legend.text = element_text(size = 14))
-ggsave(graphName, width = 40, height = 28, units = "cm")
+  ylim(0, 1080) +
+  Theme
 
 
 
@@ -111,14 +94,7 @@ for (Pp in unique((b2Data$ID))){
                  geom = "errorbar", color = 'green', width = 0.2, alpha = 0.1) +
     xlab("Time") + ylab("Converted hight") + ggtitle(graphTitel) +
     ylim(200, 900) +
-    theme(plot.title = element_text(hjust = 0.5)) +
-    theme(axis.text   = element_text(size = 12),
-          axis.title  = element_text(size = 14, face = "bold"),
-          axis.line.y = element_line(color = "black", size = 1),
-          axis.line.x = element_line(color = "black", size = 1)) +
-    theme(axis.line.y = element_line(color = "black", size = 1),
-          axis.line.x = element_line(color = "black", size = 1)) +
-    theme(legend.text = element_text(size = 14))
+    Theme
   ggsave(graphName, width = 40, height = 28, units = "cm")
   
 }
